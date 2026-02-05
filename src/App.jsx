@@ -1,15 +1,24 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
-import "./App.css";
+// App.js
+import { Routes, Route, useLocation } from "react-router-dom";
+import Navbar from "./layout/Navbar";
+import PageWrapper from "./componnent/PageWrapper";
+import Home from "./pages/Home";
+import Create from "./pages/Create";
 
 function App() {
-  const [count, setCount] = useState(0);
+  const location = useLocation();
 
   return (
-    <div className="mt-10">
-      <h2 className="text-red-500">Hell React</h2>
-    </div>
+    <>
+      <Navbar />
+      {/* Wrap the entire Routes block or use the Wrapper inside each page */}
+      <PageWrapper key={location.pathname}>
+        <Routes location={location} key={location.pathname}>
+          <Route path="/" element={<Home />} />
+          <Route path="/create" element={<Create />} />
+        </Routes>
+      </PageWrapper>
+    </>
   );
 }
 
