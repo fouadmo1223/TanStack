@@ -1,5 +1,11 @@
+import Table from "../componnent/Table";
+
 const Home = () => {
-  return <h2 className="text-red-500 mt-10">Home</h2>;
+  return (
+    <div className="bg-[#0f1115] pt-10 flex justify-center items-center ">
+      <Table />
+    </div>
+  );
 };
 
 export default Home;
