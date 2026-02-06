@@ -9,6 +9,7 @@ const UseGetPosts = () => {
   const query = useQuery({
     queryFn: fetchPosts,
     queryKey: ["posts"],
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
   console.log(query.data);
   return query;

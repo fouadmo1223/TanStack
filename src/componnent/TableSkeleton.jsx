@@ -31,11 +31,11 @@ const TableSkeleton = () => {
 
         {/* Table Skeleton */}
         <div className="rounded-3xl border border-white/5 bg-[#121214] overflow-hidden">
-          <div className="h-14 bg-white/[0.02] border-b border-white/5" />
+          <div className="h-14 bg-white/2 border-b border-white/5" />
           {[...Array(5)].map((_, i) => (
             <div
               key={i}
-              className="flex items-center p-6 border-b border-white/[0.03]"
+              className="flex items-center p-6 border-b border-white/3"
             >
               <div className="w-12 h-4 bg-white/5 rounded skeleton-block mr-8" />
               <div className="flex-1 h-4 bg-white/5 rounded skeleton-block mr-8" />
