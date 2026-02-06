@@ -18,7 +18,7 @@ const Search = ({ onSearch }) => {
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="Search content..."
-        className="w-full md:w-72 px-5 py-2.5 rounded-full bg-white/[0.03]
+        className="w-full md:w-72 px-5 py-2.5 rounded-[8px] bg-white/[0.03]
                    text-white text-sm border border-white/10
                    placeholder-gray-500 focus:border-blue-500/50 
                    focus:bg-white/[0.06] outline-none transition-all"

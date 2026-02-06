@@ -17,6 +17,7 @@ const UseGetPosts = (status, search) => {
     queryFn: () => getPosts(status, search),
     staleTime: 1000 * 60 * 5,
     placeholderData: keepPreviousData, // ✅ Modern way to keep data during search
+    refetchInterval: 1000 * 60 * 30, // ✅ Refetch data every 30 minutes
   });
 };
 
