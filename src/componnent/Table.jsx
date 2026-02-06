@@ -1,8 +1,9 @@
-import { useRef, useState, useMemo } from "react";
+import { useCallback, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 import UseGetPosts from "../hooks/UseGetPosts";
 import TableSkeleton from "./TableSkeleton";
+import Search from "./Search";
 
 const STATUSES = ["all", "published", "draft", "block"];
 
@@ -10,16 +11,17 @@ const Table = () => {
   const containerRef = useRef(null);
   const { contextSafe } = useGSAP({ scope: containerRef });
 
-  const postsData = UseGetPosts();
   const [statusFilter, setStatusFilter] = useState("all");
+  const [search, setSearch] = useState(""); // ✅ added
 
-  const filteredPosts = useMemo(() => {
-    if (!postsData?.data) return [];
-    if (statusFilter === "all") return postsData.data;
-    return postsData.data.filter((post) => post.status === statusFilter);
-  }, [postsData?.data, statusFilter]);
+  // Memoize search to prevent effect loops
+  const handleSearch = useCallback((val) => {
+    setSearch(val);
+  }, []);
 
-  // Entrance animation (re-run on filter change)
+  const postsData = UseGetPosts(statusFilter, search); // ✅ updated
+
+  // Entrance animation (re-run on filter + search change)
   useGSAP(
     () => {
       gsap.from(".table-row", {
@@ -30,7 +32,7 @@ const Table = () => {
         ease: "power3.out",
       });
     },
-    { scope: containerRef, dependencies: [statusFilter] },
+    { scope: containerRef, dependencies: [statusFilter, search] }, // ✅ updated
   );
 
   // Hover animations
@@ -106,7 +108,10 @@ const Table = () => {
             </div>
           </div>
 
-          <button className="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-full text-sm font-bold transition-all shadow-lg shadow-blue-500/20 self-start md:self-auto">
+          {/* ✅ wired search */}
+          <Search onSearch={handleSearch} />
+
+          <button className="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-full text-sm font-bold transition-all shadow-lg shadow-blue-500/20">
             + New Post
           </button>
         </header>
@@ -125,7 +130,7 @@ const Table = () => {
             </thead>
 
             <tbody className="divide-y divide-white/[0.03]">
-              {filteredPosts.map((item, idx) => (
+              {postsData?.data?.map((item, idx) => (
                 <tr
                   key={item.id}
                   onMouseEnter={handleMouseEnter}
@@ -178,10 +183,10 @@ const Table = () => {
                 </tr>
               ))}
 
-              {filteredPosts.length === 0 && (
+              {postsData?.data?.length === 0 && (
                 <tr>
                   <td colSpan="5" className="p-10 text-center text-gray-500">
-                    No posts found for this status.
+                    No posts found.
                   </td>
                 </tr>
               )}
