@@ -9,6 +9,7 @@ import { getPosts } from "../hooks/UseGetPosts"; // Export the fetcher function 
 import TableSkeleton from "./TableSkeleton";
 import Search from "./Search";
 import Pagination from "./Pagination";
+import { useNavigate } from "react-router-dom";
 
 const STATUSES = ["all", "published", "draft", "block"];
 
@@ -23,7 +24,7 @@ const Table = () => {
 
   // 1. Fetch current data
   const postsData = UseGetPosts(statusFilter, search, page);
-
+  const navigate = useNavigate();
   const posts = postsData?.data?.data || [];
   const total = postsData?.data?.total || 0;
   const totalPages = Math.ceil(total / PAGE_SIZE_CONST);
@@ -173,7 +174,12 @@ const Table = () => {
                     {(page - 1) * PAGE_SIZE_CONST + idx + 1}
                   </td>
 
-                  <td className="p-6">
+                  <td
+                    className="p-6"
+                    onClick={() => {
+                      navigate(`/post/${item.id}`);
+                    }}
+                  >
                     <div className="text-sm font-semibold group-hover:text-blue-400 transition-colors">
                       {item.title}
                     </div>

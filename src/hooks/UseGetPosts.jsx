@@ -5,31 +5,34 @@ const PAGE_SIZE = 6;
 
 // hooks/UseGetPosts.js
 export const getPosts = async (status, search, page) => {
-  const res = await axios.get("http://localhost:3001/posts", {
-    params: {
-      _limit: PAGE_SIZE,
-      _page: page,
-      ...(status !== "all" && { status }),
-      ...(search && { q: search }),
-    },
-  });
+  let query = `?_page=${page}&_limit=${PAGE_SIZE}`;
 
-  // Check both lowercase and PascalCase for compatibility
+  if (status !== "all") {
+    query += `&status=${encodeURIComponent(status)}`;
+  }
+
+  if (search) {
+    query += `&q=${encodeURIComponent(search)}`;
+  }
+
+  const res = await axios.get(`http://localhost:3001/posts${query}`);
+
   const totalHeader =
     res.headers["x-total-count"] || res.headers["X-Total-Count"];
 
   return {
     data: res.data,
-    total: parseInt(totalHeader || 0, 10),
+    total: Number(totalHeader) || 0,
   };
 };
+
 const UseGetPosts = (status, search, page) => {
   return useQuery({
     queryKey: ["posts", status, search, page],
     queryFn: () => getPosts(status, search, page),
     placeholderData: keepPreviousData,
     staleTime: 1000 * 60 * 5,
-    refetchInterval: 1000 * 60 * 30, // ✅ Refetch data every 30 minutes
+    refetchInterval: 1000 * 60 * 30,
   });
 };
 

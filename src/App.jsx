@@ -4,6 +4,7 @@ import Navbar from "./layout/Navbar";
 import PageWrapper from "./componnent/PageWrapper";
 import Home from "./pages/Home";
 import Create from "./pages/Create";
+import PostDetails from "./componnent/PostDetails";
 
 function App() {
   const location = useLocation();
@@ -11,11 +12,13 @@ function App() {
   return (
     <>
       <Navbar />
-      {/* Wrap the entire Routes block or use the Wrapper inside each page */}
+
       <PageWrapper key={location.pathname}>
-        <Routes location={location} key={location.pathname}>
+        <Routes location={location}>
           <Route path="/" element={<Home />} />
           <Route path="/create" element={<Create />} />
+          {/* Standalone post details page */}
+          <Route path="/post/:id" element={<PostDetails />} />
         </Routes>
       </PageWrapper>
     </>
