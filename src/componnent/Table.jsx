@@ -1,38 +1,72 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
-import UseGetPosts from "../hooks/UseGetPosts";
+import { useQueryClient } from "@tanstack/react-query";
+
+// Assuming these are in your project structure
+import UseGetPosts, { PAGE_SIZE_CONST } from "../hooks/UseGetPosts";
+import { getPosts } from "../hooks/UseGetPosts"; // Export the fetcher function too
 import TableSkeleton from "./TableSkeleton";
 import Search from "./Search";
+import Pagination from "./Pagination";
 
 const STATUSES = ["all", "published", "draft", "block"];
 
 const Table = () => {
   const containerRef = useRef(null);
+  const queryClient = useQueryClient();
   const { contextSafe } = useGSAP({ scope: containerRef });
 
+  const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("all");
-  const [search, setSearch] = useState(""); // ✅ added
+  const [search, setSearch] = useState("");
 
-  // Memoize search to prevent effect loops
+  // 1. Fetch current data
+  const postsData = UseGetPosts(statusFilter, search, page);
+
+  const posts = postsData?.data?.data || [];
+  const total = postsData?.data?.total || 0;
+  const totalPages = Math.ceil(total / PAGE_SIZE_CONST);
+
+  // 2. Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter, search]);
+
+  // 3. Prefetch the next page for snappy UX
+  useEffect(() => {
+    if (page < totalPages) {
+      const nextPage = page + 1;
+      queryClient.prefetchQuery({
+        queryKey: ["posts", statusFilter, search, nextPage],
+        queryFn: () => getPosts(statusFilter, search, nextPage),
+      });
+    }
+  }, [page, totalPages, statusFilter, search, queryClient]);
+
   const handleSearch = useCallback((val) => {
     setSearch(val);
   }, []);
 
-  const postsData = UseGetPosts(statusFilter, search); // ✅ updated
-
-  // Entrance animation (re-run on filter + search change)
+  // Entrance animation - triggers on data change
   useGSAP(
     () => {
-      gsap.from(".table-row", {
-        opacity: 0,
-        y: 20,
-        duration: 0.6,
-        stagger: 0.08,
-        ease: "power3.out",
-      });
+      if (posts.length > 0) {
+        gsap.fromTo(
+          ".table-row",
+          { opacity: 0, y: 20 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.6,
+            stagger: 0.08,
+            ease: "power3.out",
+            overwrite: "auto",
+          },
+        );
+      }
     },
-    { scope: containerRef, dependencies: [statusFilter, search] }, // ✅ updated
+    { scope: containerRef, dependencies: [posts] },
   );
 
   // Hover animations
@@ -99,8 +133,7 @@ const Table = () => {
                       statusFilter === status
                         ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30"
                         : "bg-white/5 text-gray-400 hover:bg-white/10"
-                    }
-                  `}
+                    }`}
                 >
                   {status}
                 </button>
@@ -108,7 +141,6 @@ const Table = () => {
             </div>
           </div>
 
-          {/* ✅ wired search */}
           <Search onSearch={handleSearch} />
 
           <button className="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-full text-sm font-bold transition-all shadow-lg shadow-blue-500/20">
@@ -116,7 +148,7 @@ const Table = () => {
           </button>
         </header>
 
-        {/* Table */}
+        {/* Table Container */}
         <div className="relative overflow-hidden rounded-3xl border border-white/5 bg-[#121214] shadow-2xl">
           <table className="w-full border-collapse text-left">
             <thead>
@@ -130,7 +162,7 @@ const Table = () => {
             </thead>
 
             <tbody className="divide-y divide-white/[0.03]">
-              {postsData?.data?.map((item, idx) => (
+              {posts.map((item, idx) => (
                 <tr
                   key={item.id}
                   onMouseEnter={handleMouseEnter}
@@ -138,7 +170,7 @@ const Table = () => {
                   className="table-row group relative cursor-pointer transition-colors"
                 >
                   <td className="p-6 text-gray-600 font-mono text-xs">
-                    {idx + 1}
+                    {(page - 1) * PAGE_SIZE_CONST + idx + 1}
                   </td>
 
                   <td className="p-6">
@@ -157,8 +189,7 @@ const Table = () => {
                               : item.status === "draft"
                                 ? "bg-amber-400"
                                 : "bg-rose-400"
-                          }
-                        `}
+                          }`}
                       />
                       <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
                         {item.status}
@@ -183,7 +214,7 @@ const Table = () => {
                 </tr>
               ))}
 
-              {postsData?.data?.length === 0 && (
+              {posts.length === 0 && !postsData.isFetching && (
                 <tr>
                   <td colSpan="5" className="p-10 text-center text-gray-500">
                     No posts found.
@@ -192,7 +223,21 @@ const Table = () => {
               )}
             </tbody>
           </table>
+
+          {/* Subtle loading indicator for background fetching */}
+          {postsData.isFetching && (
+            <div className="absolute bottom-0 left-0 w-full h-1 bg-blue-600/20 overflow-hidden">
+              <div className="h-full bg-blue-600 animate-progress w-1/3"></div>
+            </div>
+          )}
         </div>
+
+        {/* Pagination */}
+        <Pagination
+          page={page}
+          totalPages={Math.max(totalPages, 1)}
+          onPageChange={setPage}
+        />
       </div>
     </div>
   );
